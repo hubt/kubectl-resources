@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -42,8 +43,20 @@ type PodList struct {
 }
 
 func main() {
-	// Execute "kubectl get pods -A -o  yaml" command
-	cmd := exec.Command("kubectl", "get", "pods", "-A", "-o", "yaml")
+
+	var namespace string
+	flag.StringVar(&namespace, "namespace", "", "Namespace")
+	flag.StringVar(&namespace, "n", "", "Namespace")
+
+	flag.Parse()
+
+	var cmd *exec.Cmd
+	if namespace == "" {
+		cmd = exec.Command("kubectl", "get", "pods", "-A", "-o", "yaml")
+	} else {
+		cmd = exec.Command("kubectl", "get", "pods", "-n", namespace, "-o", "yaml")
+	}
+		
 	output, err := cmd.Output()
 	if err != nil {
 		log.Fatalf("Error executing kubectl get pods command: %s", err)
@@ -56,8 +69,8 @@ func main() {
 		log.Fatalf("Error parsing YAML: %s", err)
 	}
 
-	parseTop(&podList)
-	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', tabwriter.Debug)
+	parseTop(namespace,&podList)
+	w := tabwriter.NewWriter(os.Stdout, 1, 1, 0, ' ', tabwriter.Debug)
 	fmt.Fprintf(w, "NAMESPACE\tPOD\tCONTAINER\tCPU:UTIL\tCPU:REQ\tCPU:LIM\tMEM:UTIL\tMEM:REQ\tMEM:LIM\n")
 
 	pods := podList
@@ -71,16 +84,24 @@ func main() {
 	w.Flush()
 }
 
-func parseTop(podList *PodList) error {
-	cmd := exec.Command("kubectl", "top", "pods", "-A", "--containers", "--no-headers")
+func parseTop(namespace string, podList *PodList) error {
+	var cmd *exec.Cmd
+	if namespace == "" {
+		cmd = exec.Command("kubectl", "top", "pods", "-A", "--containers", "--no-headers")
+	} else {
+		cmd = exec.Command("kubectl", "top", "pods", "-n", namespace, "--containers", "--no-headers")
+	}
 	output, err := cmd.Output()
 	if err != nil {
 		log.Fatalf("Error executing kubectl top command: %s", err)
-		os.Exit(1)
 	}
 
 	for _, line := range strings.Split(string(output), "\n") {
 		s := strings.Fields(line)
+		if namespace != "" {
+			s = append([]string{namespace},s...)
+		}
+
 		if len(s) != 5 {
 			continue
 		}
