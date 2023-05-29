@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	//"os"
+	"os"
 	"os/exec"
+	"text/tabwriter"
 	//"strings"
 
 	"gopkg.in/yaml.v2"
@@ -19,6 +20,20 @@ type PodList struct {
 type Metadata struct {
 	Name      string `yaml:"name"`
 	Namespace string `yaml:"namespace"`
+}
+
+type Pod struct {
+	Metadata   Metadata `yaml:"metadata"`
+	Spec       PodSpec  `yaml:"spec"`
+}
+
+type PodSpec struct {
+	Containers []Container
+}
+
+type Container struct {
+	Name      string
+	Resources Resources
 }
 
 type Resources struct {
@@ -36,21 +51,6 @@ type Requests struct {
 	CPU    string `yaml:"cpu"`
 }
 
-type Container struct {
-	Name      string
-	Resources Resources
-}
-
-type PodSpec struct {
-	Containers []Container
-}
-
-type Pod struct {
-	APIVersion string   `yaml:"apiVersion"`
-	Kind       string   `yaml:"kind"`
-	Metadata   Metadata `yaml:"metadata"`
-	Spec       PodSpec  `yaml:"spec"`
-}
 
 func main() {
 	// Execute "kubectl get pods -A -o  yaml" command
@@ -66,13 +66,18 @@ func main() {
 		log.Fatalf("Error parsing YAML: %s", err)
 	}
 
+	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
+	fmt.Fprintf(w,"NAMESPACE\tPOD\tCONTAINER\tCPU\tMEMORY\n")
+
 	pods := yamlMap
 	for _, pod := range pods.Items {
-		fmt.Printf("Namespace: %s\n  Pod: %s\n", pod.Metadata.Namespace, pod.Metadata.Name)
 		for _, container := range pod.Spec.Containers {
-			fmt.Printf("    container: %s\n", container.Name)
-			fmt.Printf("      CPU: %s/%s\n", container.Resources.Requests.CPU, container.Resources.Limits.CPU)
-			fmt.Printf("      Memory: %s/%s\n", container.Resources.Requests.Memory, container.Resources.Limits.Memory)
+			fmt.Fprintf(w,"%s\t%s\t", pod.Metadata.Namespace, pod.Metadata.Name)
+			fmt.Fprintf(w,"%s\t", container.Name)
+			fmt.Fprintf(w,"%s/%s\t", container.Resources.Requests.CPU, container.Resources.Limits.CPU)
+			fmt.Fprintf(w,"%s/%s\t", container.Resources.Requests.Memory, container.Resources.Limits.Memory)
+			fmt.Fprintf(w,"\n")
 		}
 	}
+	w.Flush()
 }
