@@ -2,14 +2,21 @@
 this kubectl plugin queries a kubernetes cluster for running pods, parses out the container requests and limits for memory and cpu.
 then does a kubectl top pods and shows the utilization, requests, and limits together for easier reference
 
-Build:
+## Build:
 either `make` or `go build *.go` 
 
-run:
+## Run:
 
+```
 ./kubectl-resources
+```
+can be installed as any other kubectl plugin, so then you can just run:
+```
+kubectl resources
+```
 
 
+```
 NAMESPACE  |POD                                    |CONTAINER             |CPU:UTIL|CPU:REQ|CPU:LIM|MEM:UTIL|MEM:REQ|MEM:LIM
 kube-system|helm-install-traefik-crd-zkw2n         |helm                  |        |       |       |        |       |
 kube-system|helm-install-traefik-tn7z9             |helm                  |        |       |       |        |       |
@@ -21,3 +28,4 @@ kube-system|svclb-traefik-cc17e230-kpdp8           |lb-tcp-80             |0m   
 kube-system|svclb-traefik-cc17e230-kpdp8           |lb-tcp-443            |0m      |       |       |0Mi     |       |
 default    |nginx-8cb56b9b9-f284m                  |nginx                 |0m      |300m   |3      |13Mi    |300M   |3G
 default    |nginx-8cb56b9b9-f284m                  |nginx2                |        |200m   |2      |        |200M   |2G
+```
