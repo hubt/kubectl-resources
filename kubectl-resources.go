@@ -56,7 +56,7 @@ func main() {
 	} else {
 		cmd = exec.Command("kubectl", "get", "pods", "-n", namespace, "-o", "yaml")
 	}
-		
+
 	output, err := cmd.Output()
 	if err != nil {
 		log.Fatalf("Error executing kubectl get pods command: %s", err)
@@ -69,7 +69,7 @@ func main() {
 		log.Fatalf("Error parsing YAML: %s", err)
 	}
 
-	parseTop(namespace,&podList)
+	parseTop(namespace, &podList)
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 0, ' ', tabwriter.Debug)
 	fmt.Fprintf(w, "NAMESPACE\tPOD\tCONTAINER\tCPU:UTIL\tCPU:REQ\tCPU:LIM\tMEM:UTIL\tMEM:REQ\tMEM:LIM\n")
 
@@ -99,7 +99,7 @@ func parseTop(namespace string, podList *PodList) error {
 	for _, line := range strings.Split(string(output), "\n") {
 		s := strings.Fields(line)
 		if namespace != "" {
-			s = append([]string{namespace},s...)
+			s = append([]string{namespace}, s...)
 		}
 
 		if len(s) != 5 {
@@ -111,6 +111,7 @@ func parseTop(namespace string, podList *PodList) error {
 		container := s[2]
 		cpu := s[3]
 		memory := s[4]
+
 		for i, p := range podList.Items {
 			if p.Metadata.Namespace == namespace && p.Metadata.Name == pod {
 				for j, c := range p.Spec.Containers {
